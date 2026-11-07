@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffc2dd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PocketPals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>window.tailwind&&(tailwind.config={theme:{extend:{fontFamily:{sans:['"Plus Jakarta Sans"','system-ui','sans-serif']}}}})</script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;--bg:#fff5fa;--card:rgba(255,255,255,.82);--cb:rgba(255,255,255,.95);--txt:#3a2a52;--mut:#7b6b92;--soft:rgba(167,139,250,.15);--fld:#fff;--fldb:#e6d6fb;--good:#0b9568;--bad:#e11d48;--warn:#c76a05;--sh:0 12px 32px -14px rgba(236,72,153,.4)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#1b1330;--card:rgba(52,38,86,.78);--cb:rgba(255,255,255,.12);--txt:#f7effe;--mut:#bfaedb;--soft:rgba(255,255,255,.09);--fld:rgba(27,19,48,.85);--fldb:rgba(255,255,255,.2);--good:#6ee7b7;--bad:#fda4af;--warn:#fcd34d;--sh:0 12px 32px -14px rgba(0,0,0,.6)}:root:not([data-theme=light]) .ct{color:var(--dk)}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#1b1330;--card:rgba(52,38,86,.78);--cb:rgba(255,255,255,.12);--txt:#f7effe;--mut:#bfaedb;--soft:rgba(255,255,255,.09);--fld:rgba(27,19,48,.85);--fldb:rgba(255,255,255,.2);--good:#6ee7b7;--bad:#fda4af;--warn:#fcd34d;--sh:0 12px 32px -14px rgba(0,0,0,.6)}
+:root[data-theme=dark] .ct{color:var(--dk)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+.hidden{display:none}
+body{color:var(--txt);font-family:'Plus Jakarta Sans',system-ui,sans-serif;min-height:100vh;background:radial-gradient(40rem 28rem at 0% 0%,rgba(255,150,200,.45),transparent 60%),radial-gradient(40rem 28rem at 100% 8%,rgba(125,190,255,.45),transparent 60%),radial-gradient(44rem 30rem at 50% 100%,rgba(255,200,140,.4),transparent 60%),var(--bg);background-attachment:fixed}
+.card{background:var(--card);border:1.5px solid var(--cb);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--sh);border-radius:1.75rem}
+.mut{color:var(--mut)}.soft{background:var(--soft)}.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}.ct{color:var(--lt)}
+.b-good{background:rgba(16,185,129,.18);color:var(--good)}.b-warn{background:rgba(251,146,60,.2);color:var(--warn)}.b-bad{background:rgba(244,63,94,.16);color:var(--bad)}.b-n{background:var(--soft);color:var(--mut)}
+.gt{background:linear-gradient(90deg,#ff4f9a,#ff9f43,#4da3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.field{width:100%;background:var(--fld);border:1.5px solid var(--fldb);border-radius:1.1rem;padding:.75rem 1rem;color:var(--txt);outline:none;transition:.2s}
+.field:focus{border-color:#ff6fa5;box-shadow:0 0 0 4px rgba(255,111,165,.2)}.field::placeholder{color:var(--mut);opacity:.7}
+.lbl{display:block;margin-bottom:.35rem;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.btn{width:100%;border-radius:1.1rem;padding:.85rem;font-weight:800;color:#fff;background:linear-gradient(90deg,#ff5fa2,#ff9f5a);box-shadow:0 10px 22px -10px rgba(255,95,162,.8);transition:.2s}
+.btn:hover{filter:brightness(1.07)}.btn:active{transform:scale(.97)}
+.pill{border-radius:.9rem;padding:.5rem .9rem;font-size:.8rem;font-weight:800;color:#fff;background:linear-gradient(90deg,#4da3ff,#8b7bff);transition:.2s;white-space:nowrap}
+.pill:active{transform:scale(.95)}.pill.pk{background:linear-gradient(90deg,#ff5fa2,#ff9f5a)}.pill.mn{background:linear-gradient(90deg,#34d399,#2ec4b6)}
+.chip{border-radius:.8rem;padding:.4rem .8rem;font-size:.75rem;font-weight:800;background:var(--soft);color:var(--mut);white-space:nowrap}
+.chip.on{background:linear-gradient(90deg,#ff5fa2,#ff9f5a);color:#fff}
+.cat{transition:transform .2s,box-shadow .2s}.cat:hover{transform:translateY(-5px) rotate(-1deg)}.cat:active{transform:scale(.96)}
+.bar{transition:width .7s cubic-bezier(.2,.8,.2,1),background .4s}
+.fade{animation:fade .5s ease both}@keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.pop{animation:pop .3s cubic-bezier(.2,.9,.3,1.2) both}@keyframes pop{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
+.wig{animation:wig 3s ease-in-out infinite}@keyframes wig{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) scale(1.06)}}
+.scroll::-webkit-scrollbar{width:6px;height:6px}.scroll::-webkit-scrollbar-thumb{background:#d8b4fe;border-radius:9px}
+input[type=number]::-webkit-inner-spin-button{display:none}
+.mb{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:1rem;overflow-y:auto;background:rgba(58,42,82,.5);backdrop-filter:blur(6px)}
+.mb.open{display:flex}
+</style>
+</head>
+<body>
+
+<!-- AUTH (shown only when cloud sync is on) -->
+<div id="auth" class="mb" style="z-index:50"><div class="card pop my-auto w-full max-w-md p-7">
+ <div class="wig mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-3xl text-3xl" style="background:linear-gradient(135deg,#ffc2dd,#bfe0ff)">🐷</div>
+ <h1 class="text-center text-3xl font-extrabold tracking-tight">Pocket<span class="gt">Pals</span></h1>
+ <p class="mut mb-5 mt-1 text-center text-sm font-semibold">Sign in to keep your savings on every device ☁️</p>
+ <div class="soft mb-4 grid grid-cols-2 gap-1 rounded-2xl p-1"><button id="tabIn" class="chip on !py-2 text-center">Sign in</button><button id="tabUp" class="chip !py-2 text-center">Create account</button></div>
+ <form id="aForm" class="space-y-3.5">
+  <div id="aNameW" class="hidden"><label class="lbl">Your name</label><input id="aName" class="field" placeholder="Maria Santos" maxlength="30"></div>
+  <div><label class="lbl">Email</label><input id="aEmail" type="email" class="field" placeholder="you@email.com" autocomplete="email"></div>
+  <div><label class="lbl">Password</label><input id="aPass" type="password" class="field" placeholder="At least 6 characters" autocomplete="current-password"></div>
+  <div id="aErr" class="b-bad hidden rounded-xl px-3 py-2 text-xs font-bold"></div>
+  <button id="aBtn" class="btn">Sign in →</button>
+  <button type="button" id="aForgot" class="mut w-full text-center text-xs font-bold underline">Forgot password?</button>
+ </form></div></div>
+
+<!-- EXPENSE -->
+<div id="exp" class="mb"><div class="card pop w-full max-w-md p-6">
+ <div class="mb-4 flex items-center gap-3"><div id="eIcon" class="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"></div>
+  <div class="flex-1"><h3 id="eTitle" class="text-lg font-extrabold"></h3><p id="eSub" class="mut text-xs"></p></div>
+  <button data-close class="soft h-9 w-9 rounded-xl" aria-label="Close">✕</button></div>
+ <form id="eForm" class="space-y-3.5">
+  <div id="eCustomW" class="hidden space-y-2"><div><label class="lbl">What did you buy?</label><input id="eLabel" class="field" maxlength="24" placeholder="e.g. Movie ticket, Haircut, Load"></div>
+   <div id="emos" class="flex flex-wrap gap-1.5"></div></div>
+  <div><label class="lbl">Amount</label><div class="relative"><span class="mut absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold">₱</span>
+   <input id="eAmt" type="number" min="0.01" step="0.01" inputmode="decimal" class="field pl-10 text-xl font-bold" placeholder="0.00" required></div>
+   <div id="chips" class="mt-2 flex gap-2"></div></div>
+  <div><label class="lbl">Note <span class="font-semibold normal-case">(optional)</span></label><input id="eNote" class="field" maxlength="60" placeholder="e.g. Chicken adobo lunch"></div>
+  <button id="eBtn" class="btn">Log expense</button>
+ </form></div></div>
+
+<!-- ADD SAVINGS -->
+<div id="dep" class="mb"><div class="card pop w-full max-w-md p-6">
+ <div class="mb-4 flex items-center gap-3"><div class="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl" style="background:rgba(52,211,153,.2)">🪙</div>
+  <div class="flex-1"><h3 class="text-lg font-extrabold">Add to savings</h3><p class="mut text-xs">Found money? Gift? Stash it here!</p></div>
+  <button data-close class="soft h-9 w-9 rounded-xl" aria-label="Close">✕</button></div>
+ <form id="dForm" class="space-y-3.5">
+  <div><label class="lbl">Amount</label><div class="relative"><span class="mut absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold">₱</span>
+   <input id="dAmt" type="number" min="0.01" step="0.01" inputmode="decimal" class="field pl-10 text-xl font-bold" placeholder="0.00" required></div>
+   <div id="dChips" class="mt-2 flex gap-2"></div></div>
+  <div><label class="lbl">Where did it come from? <span class="font-semibold normal-case">(optional)</span></label><input id="dNote" class="field" maxlength="60" placeholder="e.g. Found in my jacket, birthday gift"></div>
+  <button class="btn" style="background:linear-gradient(90deg,#34d399,#2ec4b6)">Add to my savings</button>
+ </form></div></div>
+
+<!-- TAKE OUT SAVINGS -->
+<div id="wd" class="mb"><div class="card pop w-full max-w-md p-6">
+ <div class="mb-4 flex items-center gap-3"><div class="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl" style="background:rgba(255,159,67,.25)">💸</div>
+  <div class="flex-1"><h3 class="text-lg font-extrabold">Take out savings</h3><p id="wdAvail" class="mut text-xs font-semibold"></p></div>
+  <button data-close class="soft h-9 w-9 rounded-xl" aria-label="Close">✕</button></div>
+ <form id="wdForm" class="space-y-3.5">
+  <div><label class="lbl">Amount</label><div class="relative"><span class="mut absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold">₱</span>
+   <input id="wdAmt" type="number" min="0.01" step="0.01" inputmode="decimal" class="field pl-10 text-xl font-bold" placeholder="0.00" required></div>
+   <button type="button" id="wdAll" class="chip mt-2">Take all</button></div>
+  <div><label class="lbl">What’s it for? <span class="font-semibold normal-case">(optional)</span></label><input id="wdNote" class="field" maxlength="60" placeholder="e.g. Emergency, school project"></div>
+  <button class="btn">Take out from savings</button>
+ </form></div></div>
+
+<!-- WRAP UP -->
+<div id="wrap" class="mb"><div class="card pop w-full max-w-md p-6">
+ <div class="mb-4 flex items-center gap-3"><div class="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl" style="background:rgba(139,123,255,.2)">🌙</div>
+  <div class="flex-1"><h3 class="text-lg font-extrabold">Wrap up your day</h3><p id="wDate" class="mut text-xs"></p></div>
+  <button data-close class="soft h-9 w-9 rounded-xl" aria-label="Close">✕</button></div>
+ <div id="wBody"></div>
+ <div class="mt-5 grid grid-cols-2 gap-3"><button data-close class="soft rounded-2xl py-3 text-sm font-bold">Cancel</button><button id="wOk" class="btn !py-3 !text-sm">Confirm &amp; lock day</button></div>
+</div></div>
+
+<div id="toast" class="card fixed left-1/2 top-5 z-[60] -translate-x-1/2 -translate-y-28 !rounded-2xl px-5 py-3 text-sm font-bold transition duration-300" style="pointer-events:none"></div>
+
+<div id="app" class="hidden">
+<header class="sticky top-0 z-30" style="background:var(--card);backdrop-filter:blur(14px);border-bottom:1.5px solid var(--cb)">
+ <div class="mx-auto flex max-w-6xl items-center gap-2.5 px-4 py-2.5">
+  <div class="flex h-10 w-10 items-center justify-center rounded-2xl text-xl" style="background:linear-gradient(135deg,#ffc2dd,#bfe0ff)">🐷</div><div class="text-xl font-extrabold tracking-tight">Pocket<span class="gt">Pals</span></div>
+  <div class="mut ml-auto hidden text-right text-xs font-bold sm:block" id="date"></div>
+  <div class="soft ml-auto flex items-center gap-2 rounded-2xl py-1 pl-1 pr-3 sm:ml-2"><div id="av" class="flex h-8 w-8 items-center justify-center rounded-xl text-sm font-extrabold text-white" style="background:linear-gradient(135deg,#ff5fa2,#8b7bff)"></div><div id="uname" class="max-w-[90px] truncate text-sm font-bold"></div></div>
+  <span id="sync" class="chip !px-2.5" title="">💾</span><button id="logout" class="soft hidden rounded-xl px-3 py-2 text-sm font-bold" title="Log out">⎋</button>
+ </div>
+</header>
+
+<main class="mx-auto max-w-6xl space-y-5 px-4 py-5">
+ <div id="warn" class="b-warn hidden rounded-2xl px-4 py-2 text-xs font-bold">⚠️ This browser is blocking storage (private mode?). Your data won’t be saved after you close the page.</div>
+ <div class="fade"><h2 id="hello" class="text-2xl font-extrabold sm:text-3xl"></h2><p class="mut text-sm font-semibold">Let’s make every peso count today ✨</p></div>
+
+ <section class="card fade p-5" style="background:linear-gradient(135deg,rgba(255,214,102,.38),rgba(255,111,165,.24),rgba(77,163,255,.26))">
+  <div class="flex items-start gap-4"><div id="tE" class="wig flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl" style="background:var(--card)"></div>
+   <div class="min-w-0 flex-1"><div class="warn text-[11px] font-extrabold uppercase tracking-widest">Tip of the day · <span id="tD"></span></div>
+    <h3 id="tT" class="text-lg font-extrabold"></h3><p id="tX" class="text-sm leading-relaxed"></p>
+    <div class="mt-3 flex flex-wrap items-center gap-2"><span id="tC" class="soft rounded-xl px-3 py-1.5 text-xs font-bold"></span><button id="tB" class="pill pk"></button></div></div></div>
+ </section>
+
+ <section class="grid gap-4 md:grid-cols-3">
+  <div class="card fade p-5" style="background:linear-gradient(160deg,rgba(125,190,255,.3),var(--card) 70%)">
+   <div class="mut text-xs font-extrabold uppercase tracking-wider">💙 Today’s allowance</div>
+   <div class="relative mt-3"><span class="mut absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold">₱</span><input id="allow" type="number" min="0" step="1" inputmode="decimal" class="field pl-10 text-2xl font-extrabold" placeholder="0"></div>
+   <button id="setAllow" class="pill mt-3 w-full">Set / update allowance</button></div>
+  <div class="card fade p-5" style="animation-delay:.08s;background:linear-gradient(160deg,rgba(255,111,165,.28),var(--card) 70%)">
+   <div class="mut text-xs font-extrabold uppercase tracking-wider">💸 Spent today</div>
+   <div id="spent" class="bad mt-4 text-4xl font-extrabold tracking-tight">₱0.00</div>
+   <div class="mut mt-2 text-sm font-semibold"><b id="count">0</b> transactions today</div></div>
+  <div class="card fade p-5" style="animation-delay:.16s;background:linear-gradient(160deg,rgba(52,211,153,.28),var(--card) 70%)">
+   <div class="flex items-center justify-between"><span class="mut text-xs font-extrabold uppercase tracking-wider">🌿 Remaining</span><span id="badge" class="rounded-lg px-2 py-1 text-xs font-extrabold"></span></div>
+   <div id="remain" class="mt-4 text-4xl font-extrabold tracking-tight">₱0.00</div>
+   <div class="soft mt-3 h-3 overflow-hidden rounded-full"><div id="bar" class="bar h-full rounded-full" style="width:0"></div></div>
+   <div class="mut mt-1.5 flex justify-between text-xs font-semibold"><span id="pct"></span><span id="msg" class="bad"></span></div></div>
+ </section>
+
+ <section>
+  <div class="mb-3 flex items-center justify-between gap-3"><h2 class="mut text-sm font-extrabold uppercase tracking-wider">⚡ Quick expense logger</h2><button id="wrapBtn" class="pill">🌙 Wrap Up Day</button></div>
+  <div id="cats" class="grid grid-cols-2 gap-3 lg:grid-cols-5"></div>
+ </section>
+
+ <section class="grid gap-5 lg:grid-cols-5">
+  <div class="card fade p-5 lg:col-span-3">
+   <div class="flex items-start justify-between gap-3"><div><h2 class="text-lg font-extrabold">💰 Savings tracker</h2><p class="mut text-xs font-semibold">Unspent allowance + extra money you add</p></div>
+    <div class="text-right"><div class="mut text-[10px] font-extrabold uppercase tracking-wider">Total saved</div><div id="saved" class="good text-3xl font-extrabold">₱0.00</div></div></div>
+   <div class="mut mt-1 text-[11px] font-semibold" id="savedS"></div>
+   <div class="mt-3 flex flex-wrap items-center gap-2"><button id="depBtn" class="pill mn">➕ Add money</button><button id="wdBtn" class="pill pk">➖ Take out savings</button><span id="savedP" class="mut text-[11px] font-semibold"></span></div>
+   <div id="verdict" class="mt-3 rounded-2xl px-4 py-2.5 text-sm font-bold"></div>
+   <div class="relative mt-3 h-52"><canvas id="sChart"></canvas></div>
+  </div>
+  <div class="card fade p-5 lg:col-span-2">
+   <h2 class="text-lg font-extrabold">🎯 Savings goals</h2><p class="mut text-xs font-semibold">Add as many goals as you like!</p>
+   <div class="mt-3 grid grid-cols-5 gap-2"><input id="gName" class="field col-span-3 !px-3 text-sm" placeholder="e.g. New shoes" maxlength="30"><input id="gAmt" type="number" min="1" inputmode="decimal" class="field col-span-2 !px-3 text-sm" placeholder="₱ target"></div>
+   <button id="gSave" class="pill pk mt-2 w-full">➕ Add goal</button><div id="goal" class="scroll mt-4 max-h-72 space-y-3 overflow-y-auto pr-1"></div>
+  </div>
+ </section>
+
+ <section id="stats" class="grid grid-cols-2 gap-3 lg:grid-cols-4"></section>
+
+ <section class="grid gap-5 lg:grid-cols-5">
+  <div class="card fade p-5 lg:col-span-3">
+   <div class="mb-3 flex items-center justify-between"><div><h2 class="text-lg font-extrabold">📈 Today’s balance trajectory</h2><p class="mut text-xs font-semibold">Balance after every transaction</p></div><span id="trend" class="rounded-lg px-2.5 py-1 text-xs font-extrabold"></span></div>
+   <div class="relative h-60"><canvas id="chart"></canvas></div></div>
+  <div class="card fade p-5 lg:col-span-2"><h2 class="text-lg font-extrabold">🍩 Spending by category</h2><p class="mut mb-4 text-xs font-semibold">All recorded transactions</p><div id="catBars" class="space-y-3.5"></div></div>
+ </section>
+
+ <section class="card fade p-5">
+  <div class="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h2 class="text-lg font-extrabold">🧾 Transaction history</h2><p id="hSum" class="mut text-xs font-semibold"></p></div>
+   <input id="hq" class="field !w-full !py-2 text-sm sm:!w-56" placeholder="Search…"></div>
+  <div id="hf" class="scroll mb-3 flex gap-2 overflow-x-auto pb-1"></div>
+  <div id="hist" class="scroll max-h-[30rem] space-y-1.5 overflow-y-auto pr-1"></div>
+ </section>
+ <footer class="mut space-y-2 pb-6 pt-2 text-center text-xs font-semibold"><div>PocketPals · Spend smart, save more 🌱</div><div class="flex flex-wrap justify-center gap-4"><button id="bkp" class="underline">⬇ Download backup</button><label class="cursor-pointer underline">⬆ Restore backup<input id="rst" type="file" accept=".json,application/json" class="hidden"></label><button id="reset" class="underline">Reset my data</button></div></footer>
+</main>
+</div>
+
+<script>
+/* ============================================================
+   CLOUD SYNC (Firebase). Paste YOUR project settings below:
+   Firebase console > Project settings > Your apps > Web app > Config.
+   Leave apiKey empty to run in "this device only" mode (no login).
+   ============================================================ */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyB-cQrIS0wLh_HpPaYpepoIRa7GKDoi2Zs",
+  authDomain:"pocketpals-32b9d.firebaseapp.com",
+  projectId:"pocketpals-32b9d",
+  appId:"1:1059481064510:web:13b2b88be2f594dc6bed6f"
+};
+const $=id=>document.getElementById(id);
+const CATS={food:{n:'Food',s:'Meals & Snacks',e:'🍔',c:'#ff9f43',lt:'#c2570a',dk:'#ffbe85',chips:[30,60,100]},transport:{n:'Transportation',s:'Bus, Jeep, Commute',e:'🚌',c:'#4da3ff',lt:'#1d6fd1',dk:'#9fcbff',chips:[13,20,50]},drinks:{n:'Drinks',s:'Water, Coffee, Boba',e:'🧋',c:'#2ec4b6',lt:'#0f8a80',dk:'#7ee8de',chips:[25,60,120]},supplies:{n:'School Supplies',s:'Prints, Books, Pens',e:'✏️',c:'#a78bfa',lt:'#6d4bd8',dk:'#cbb8ff',chips:[10,50,150]},other:{n:'Other',s:'Type your own ✨',e:'✨',c:'#ff6fa5',lt:'#d6336c',dk:'#ffadc9',chips:[20,50,100]}};
+const PH={food:'e.g. Chicken adobo lunch',transport:'e.g. Jeepney ride to school',drinks:'e.g. Iced coffee, milk tea',supplies:'e.g. Notebook and pens',other:'e.g. Bought during recess'};
+const EMOS=['✨','🎬','🎮','🛍️','🎁','📱','💊','🧺','🐶','💇'];
+const TIPS=[['🍱','Baon Boss','Packing lunch just 3 days a week can save about ₱180. That’s a free milk tea waiting for you!','Pack one snack from home today.'],['🧋','Boba Math','A ₱120 boba every day is ₱3,600 a month. Make it a weekend treat and your wallet will thank you.','Swap one drink for water today.'],['🍰','The 50/30/20 Pie','Slice your allowance: 50% needs, 30% wants, 20% savings. Tiny slices still count!','Move 20% of today’s allowance into savings.'],['⏳','The 24-Hour Rule','See something cute you “need”? Wait a day. Most wants quietly vanish by tomorrow.','Wishlist one want instead of buying it.'],['👯','Squad Savings','Split printing, books and rides with classmates. Teamwork makes the peso dream work!','Ask a friend to share one cost today.'],['🚶','Walk It Out','Short trip? Walking saves fare and counts as cardio. Two wins in one step!','Walk one short stretch instead of riding.'],['🎯','Goal Getter','Saving for something specific is way easier. Name your goal and watch that bar fill up!','Set or check your savings goal.'],['🕵️','Money Detective','Students who log every purchase tend to spend less. Be the detective of your own wallet.','Log every purchase today, even tiny ones.'],['🪙','Found Money Rule','Found a ₱20 in an old jacket? Don’t spend it, stash it! Found money is the easiest saving.','Drop any spare coins into savings with ➕.'],['📚','Secondhand Hero','Used books and recycled notebooks cost way less and are just as smart.','Look for a secondhand option before buying supplies.'],['🎉','Treat Yourself, Smartly','Budgeting isn’t no-fun. Set a small “joy” amount and spend it guilt-free.','Pick one small joy and budget for it.'],['🔥','Streak Mode','Ending the day under budget builds a streak. Don’t break the chain!','Finish today under your allowance.']];
+const peso=n=>(n<0?'−':'')+'₱'+Math.abs(Number(n)).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ymd=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const mem={};let STORE_OK=true;
+try{localStorage.setItem('_t','1');localStorage.removeItem('_t')}catch(e){STORE_OK=false}
+const rd=k=>{try{const v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in mem?JSON.parse(mem[k]):null};
+const wr=(k,v)=>{mem[k]=JSON.stringify(v);try{localStorage.setItem(k,mem[k])}catch(e){}};
+async function hash(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return'x'+btoa(unescape(encodeURIComponent(s)))}}
+const users=()=>rd('pp_users')||{},norm=s=>s.trim().toLowerCase();
+let U=null,D,chart,sChart,cur='food',emo='✨',filt='all',q='';
+const save=()=>{if(!U)return;D.updatedAt=Date.now();wr('pp_data_'+U,D);cloudPush()};
+const fresh=()=>({allowance:0,tx:[],archive:[],extra:[],goal:null,goals:[],tip:null});
+const dShort=t=>new Date(t).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+const tm=t=>new Date(t).toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit'});
+const dLong=s=>new Date(s+'T00:00').toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+const open_=id=>$(id).classList.add('open'),close_=id=>$(id).classList.remove('open');
+function toast(m,bad,undo){const el=$('toast');el.textContent=m;el.style.color=bad?'var(--bad)':'var(--good)';el.style.pointerEvents=undo?'auto':'none';
+ if(undo){const b=document.createElement('button');b.textContent='Undo';b.className='ml-3 underline';b.onclick=()=>{undo();save();render();el.style.transform='translate(-50%,-7rem)'};el.append(b)}
+ el.style.transform='translate(-50%,0)';clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.transform='translate(-50%,-7rem)',undo?5500:2400)}
+const info=x=>{const c=CATS[x.cat]||CATS.other;return x.cat==='other'?{...c,e:x.emo||'✨',n:x.label||'Other'}:c};
+
+/* PROFILE + CLOUD SYNC */
+const CLOUD_ON=!!(FIREBASE_CONFIG.apiKey&&typeof firebase!=='undefined');
+let fb={},unsub=null,pushT=null;
+const SYNC={saved:['💾','Saved on this device only'],ok:['☁️ Synced','Saved to your account'],busy:['☁️ …','Syncing'],off:['⚠️ Offline','Will sync when you’re back online']};
+const setSync=k=>{$('sync').textContent=SYNC[k][0];$('sync').title=SYNC[k][1]};
+const docRef=()=>fb.db.collection('users').doc(U);
+function cloudPush(now){if(!CLOUD_ON||!fb.user||!U)return;setSync('busy');clearTimeout(pushT);
+ pushT=setTimeout(async()=>{try{await docRef().set({json:JSON.stringify(D),updatedAt:D.updatedAt});setSync('ok')}catch(e){setSync('off')}},now?0:700)}
+function listen(){if(unsub)unsub();unsub=docRef().onSnapshot(s=>{if(!s.exists||s.metadata.hasPendingWrites)return;
+ try{const r=JSON.parse(s.data().json);if((r.updatedAt||0)>(D.updatedAt||0)){D={...fresh(),...r};wr('pp_data_'+U,D);$('allow').value=D.allowance||'';dailyTip();render();setSync('ok')}}catch(e){}},()=>setSync('off'))}
+function begin(d,name){D={...fresh(),...d};if(D.goal&&!D.goals.length){D.goals=[{id:Date.now(),name:D.goal.name,target:D.goal.target}]}D.goal=null;wr('pp_data_'+U,D);
+ const h=new Date().getHours(),first=name==='Student'?'':', '+name.split(' ')[0];
+ $('hello').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+first+'! 👋';$('uname').textContent=name;$('av').textContent=name[0].toUpperCase();
+ $('date').textContent=new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+ $('allow').value=D.allowance||'';close_('auth');$('app').classList.remove('hidden');$('warn').classList.toggle('hidden',STORE_OK);
+ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+ initCharts();dailyTip();render()}
+function start(){U='me';setSync('saved');let d=rd('pp_data_me');if(!d){const old=Object.keys(users())[0];d=(old&&rd('pp_data_'+old))||rd('pocketpals_data')||fresh()}begin(d,'Student')}
+async function startCloud(user){U=user.uid;setSync('busy');let remote=null,local=rd('pp_data_'+U);
+ try{const s=await docRef().get();if(s.exists)remote=JSON.parse(s.data().json);setSync('ok')}catch(e){setSync('off')}
+ let d=local;if(remote&&(!local||(remote.updatedAt||0)>(local.updatedAt||0)))d=remote;
+ if(!d){const old=rd('pp_data_me');if(old){d=old;try{localStorage.removeItem('pp_data_me')}catch(e){}}}
+ begin(d,user.displayName||(user.email||'Student').split('@')[0]);
+ if(!remote||d!==remote)cloudPush(true);listen()}
+
+/* AUTH (cloud mode only) */
+let mode='in';const err=m=>{$('aErr').textContent=m;$('aErr').classList.toggle('hidden',!m)};
+function setMode(m){mode=m;$('aNameW').classList.toggle('hidden',m==='in');$('aForgot').classList.toggle('hidden',m!=='in');$('tabIn').classList.toggle('on',m==='in');$('tabUp').classList.toggle('on',m==='up');$('aBtn').textContent=m==='in'?'Sign in →':'Create my account 🎉';err('')}
+const fbMsg=x=>({'auth/invalid-credential':'Wrong email or password.','auth/wrong-password':'Wrong email or password.','auth/user-not-found':'Wrong email or password.','auth/email-already-in-use':'That email already has an account. Try signing in.','auth/weak-password':'Password needs at least 6 characters.','auth/invalid-email':'That email doesn’t look right.','auth/network-request-failed':'No internet connection.','auth/too-many-requests':'Too many tries. Please wait a bit.'}[x&&x.code]||'Something went wrong. Please try again.');
+$('tabIn').onclick=()=>setMode('in');$('tabUp').onclick=()=>setMode('up');
+$('aForm').onsubmit=async e=>{e.preventDefault();if(!CLOUD_ON)return;const em=$('aEmail').value.trim(),p=$('aPass').value;
+ if(!em||p.length<6)return err('Enter your email and a password of 6+ characters');
+ try{if(mode==='in')await fb.auth.signInWithEmailAndPassword(em,p);
+  else{const n=$('aName').value.trim();if(n.length<2)return err('Please enter your name');const c=await fb.auth.createUserWithEmailAndPassword(em,p);await c.user.updateProfile({displayName:n});await startCloud(fb.auth.currentUser)}
+  $('aPass').value='';err('')}catch(x){err(fbMsg(x))}};
+$('aForgot').onclick=async()=>{const em=$('aEmail').value.trim();if(!em)return err('Type your email first, then tap “Forgot password?”');
+ try{await fb.auth.sendPasswordResetEmail(em);err('');toast('Reset email sent! Check your inbox 📬')}catch(x){err(fbMsg(x))}};
+$('logout').onclick=async()=>{clearTimeout(pushT);try{await docRef().set({json:JSON.stringify(D),updatedAt:D.updatedAt})}catch(e){}
+ try{localStorage.removeItem('pp_data_'+U)}catch(e){}fb.auth.signOut()};
+function initCloud(){fb.app=firebase.initializeApp(FIREBASE_CONFIG);fb.auth=firebase.auth();fb.db=firebase.firestore();$('logout').classList.remove('hidden');
+ fb.auth.onAuthStateChanged(u=>{fb.user=u;if(u)startCloud(u);else{if(unsub){unsub();unsub=null}U=null;$('app').classList.add('hidden');open_('auth');setMode('in')}})}
+
+/* TIP: one per day, per user */
+function dailyTip(){const t=ymd();if(!D.tip||D.tip.date!==t){const n=new Date(),doy=Math.floor((n-new Date(n.getFullYear(),0,0))/864e5);D.tip={date:t,idx:doy%TIPS.length,done:false};save()}
+ const k=TIPS[D.tip.idx];$('tE').textContent=k[0];$('tT').textContent=k[1];$('tX').textContent=k[2];$('tC').textContent='🎯 Challenge: '+k[3];$('tD').textContent=t;
+ $('tB').textContent=D.tip.done?'Nice one! 🎉':'✅ I’m on it!';$('tB').classList.toggle('mn',D.tip.done)}
+$('tB').onclick=()=>{D.tip.done=!D.tip.done;save();dailyTip();if(D.tip.done)toast('Challenge accepted! You’ve got this 💪')};
+
+/* ALLOWANCE + GOAL */
+function setAllow(){const v=parseFloat($('allow').value);if(isNaN(v)||v<0)return toast('Enter a valid allowance',1);D.allowance=v;save();render();toast('Allowance set to '+peso(v))}
+$('setAllow').onclick=setAllow;$('allow').onkeydown=e=>{if(e.key==='Enter')setAllow()};
+$('gSave').onclick=()=>{const n=$('gName').value.trim(),a=parseFloat($('gAmt').value);if(!n||!(a>0))return toast('Enter a goal name and target',1);D.goals.push({id:Date.now()+Math.random(),name:n,target:a});$('gName').value='';$('gAmt').value='';save();render();toast('Goal added: '+n+' 🎯')};
+/* GOALS: add many; your savings fill them in order (oldest first) */
+function renderGoals(){const el=$('goal');let pool=Math.max(0,totalSaved());
+ if(!D.goals.length){el.innerHTML='<div class="mut rounded-2xl border-2 border-dashed p-4 text-center text-xs font-semibold" style="border-color:var(--fldb)">No goals yet. Add one above and watch your savings fill it up!</div>';return}
+ el.innerHTML=D.goals.map(g=>{const got=Math.min(pool,g.target);pool-=got;const p=got/g.target*100,done=p>=100;
+  return `<div class="soft rounded-2xl p-3"><div class="flex items-center justify-between gap-2 text-sm"><b class="truncate">${done?'🎉 ':'🎯 '}${esc(g.name)}</b><span class="flex items-center gap-2"><b class="good">${Math.round(p)}%</b><button data-gdel="${g.id}" class="text-xs" aria-label="Delete goal" title="Delete goal">🗑</button></span></div>
+  <div class="mt-2 h-3 overflow-hidden rounded-full" style="background:var(--fldb)"><div class="bar h-full rounded-full" style="width:${p}%;background:linear-gradient(90deg,#34d399,#2ec4b6)"></div></div>
+  <div class="mut mt-1.5 flex justify-between text-xs font-semibold"><span>${peso(got)} of ${peso(g.target)}</span><span>${done?'Goal reached!':peso(g.target-got)+' to go'}</span></div></div>`}).join('')}
+$('goal').onclick=e=>{const b=e.target.closest('[data-gdel]');if(!b)return;const i=D.goals.findIndex(g=>String(g.id)===b.dataset.gdel);if(i<0)return;const [g]=D.goals.splice(i,1);save();render();toast('Goal removed',0,()=>D.goals.splice(i,0,g))};
+
+/* LOGGER */
+$('cats').innerHTML=Object.entries(CATS).map(([k,c])=>`<button data-k="${k}" class="cat card p-4 text-left ${k==='other'?'col-span-2 lg:col-span-1':''}" style="border-color:${c.c}77;background:linear-gradient(160deg,${c.c}33,var(--card) 75%)">
+ <div class="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl text-2xl" style="background:${c.c}33">${c.e}</div>
+ <div class="ct font-extrabold" style="--lt:${c.lt};--dk:${c.dk}">${c.n}</div><div class="mut text-xs font-semibold">${c.s}</div></button>`).join('');
+$('cats').onclick=e=>{const b=e.target.closest('.cat');if(b)openExp(b.dataset.k)};
+$('emos').innerHTML=EMOS.map(x=>`<button type="button" data-e="${x}" class="chip !px-2.5 !text-base">${x}</button>`).join('');
+const pickEmo=x=>{emo=x;[...$('emos').children].forEach(b=>b.classList.toggle('on',b.dataset.e===x));$('eIcon').textContent=x};
+$('emos').onclick=e=>{const b=e.target.closest('[data-e]');if(b)pickEmo(b.dataset.e)};
+function openExp(k){cur=k;const c=CATS[k];$('eIcon').textContent=c.e;$('eIcon').style.background=c.c+'33';$('eTitle').textContent=k==='other'?'Custom expense':c.n;$('eSub').textContent=k==='other'?'Type anything that’s not in the list':c.s;
+ $('eBtn').style.background=`linear-gradient(90deg,${c.c},#ff9f5a)`;$('eCustomW').classList.toggle('hidden',k!=='other');$('eLabel').value='';$('eLabel').required=k==='other';if(k==='other')pickEmo('✨');
+ $('chips').innerHTML=c.chips.map(v=>`<button type="button" data-v="${v}" class="chip flex-1 !py-2 text-center !text-sm">₱${v}</button>`).join('');
+ $('eAmt').value='';$('eNote').value='';$('eNote').placeholder=PH[k];open_('exp');setTimeout(()=>$(k==='other'?'eLabel':'eAmt').focus(),60)}
+$('chips').onclick=e=>{const b=e.target.closest('button');if(b)$('eAmt').value=b.dataset.v};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{close_('exp');close_('wrap');close_('dep');close_('wd')});
+['exp','wrap','dep','wd'].forEach(id=>$(id).onclick=e=>{if(e.target===$(id))close_(id)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){close_('exp');close_('wrap');close_('dep');close_('wd')}});
+$('eForm').onsubmit=e=>{e.preventDefault();const a=parseFloat($('eAmt').value);if(!(a>0))return toast('Enter a valid amount',1);
+ const it={id:Date.now()+Math.random(),cat:cur,amt:a,note:$('eNote').value.trim(),t:Date.now()};if(cur==='other'){it.label=$('eLabel').value.trim()||'Other';it.emo=emo}
+ D.tx.push(it);save();close_('exp');render();const rem=D.allowance-spentOf();D.allowance>0&&rem<0?toast('Over budget by '+peso(-rem)+' ⚠️',1):toast(info(it).e+' '+peso(a)+' logged')};
+
+/* ADD SAVINGS */
+$('dChips').innerHTML=[20,50,100,500].map(v=>`<button type="button" data-v="${v}" class="chip flex-1 !py-2 text-center !text-sm">₱${v}</button>`).join('');
+$('dChips').onclick=e=>{const b=e.target.closest('button');if(b)$('dAmt').value=b.dataset.v};
+$('depBtn').onclick=()=>{$('dAmt').value='';$('dNote').value='';open_('dep');setTimeout(()=>$('dAmt').focus(),60)};
+$('dForm').onsubmit=e=>{e.preventDefault();const a=parseFloat($('dAmt').value);if(!(a>0))return toast('Enter a valid amount',1);
+ D.extra.push({id:Date.now()+Math.random(),amt:a,note:$('dNote').value.trim(),t:Date.now()});save();close_('dep');render();toast('🎉 '+peso(a)+' added to your savings!')};
+
+/* TAKE OUT SAVINGS (stored as a negative savings entry) */
+const totalSaved=()=>D.archive.reduce((s,x)=>s+x.net,0)+D.extra.reduce((s,x)=>s+x.amt,0);
+$('wdBtn').onclick=()=>{$('wdAmt').value='';$('wdNote').value='';$('wdAvail').textContent='Available: '+peso(Math.max(0,totalSaved()));open_('wd');setTimeout(()=>$('wdAmt').focus(),60)};
+$('wdAll').onclick=()=>{$('wdAmt').value=Math.max(0,totalSaved()).toFixed(2)};
+$('wdForm').onsubmit=e=>{e.preventDefault();const a=parseFloat($('wdAmt').value),av=totalSaved();if(!(a>0))return toast('Enter a valid amount',1);if(a>av+0.001)return toast('You only have '+peso(Math.max(0,av))+' saved',1);
+ D.extra.push({id:Date.now()+Math.random(),amt:-a,note:$('wdNote').value.trim(),t:Date.now()});save();close_('wd');render();toast('💸 '+peso(a)+' taken out of savings')};
+
+/* REMOVE A TRANSACTION (with undo) */
+function adj(a,it,s){a.spent+=s*it.amt;a.net-=s*it.amt;a.cats[it.cat]=(a.cats[it.cat]||0)+s*it.amt;a.count+=s}
+function removeItem(kind,id){id=String(id);
+ if(kind==='in'){const i=D.extra.findIndex(x=>String(x.id)===id);if(i<0)return;const [it]=D.extra.splice(i,1);return()=>D.extra.push(it)}
+ const i=D.tx.findIndex(x=>String(x.id)===id);if(i>-1){const [it]=D.tx.splice(i,1);return()=>D.tx.push(it)}
+ for(const a of D.archive){const j=(a.items||[]).findIndex(x=>String(x.id)===id);if(j>-1){const [it]=a.items.splice(j,1);adj(a,it,-1);return()=>{a.items.push(it);adj(a,it,1)}}}}
+$('hist').onclick=e=>{const b=e.target.closest('[data-del]');if(!b)return;const u=removeItem(b.dataset.k,b.dataset.del);if(u){save();render();toast('Removed. Mistakes happen! 🧽',0,u)}};
+$('hq').oninput=e=>{q=e.target.value.trim().toLowerCase();renderHist()};
+$('hf').onclick=e=>{const b=e.target.closest('[data-f]');if(b){filt=b.dataset.f;renderHist()}};
+/* BACKUP / RESTORE + save when the page is hidden */
+$('bkp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D)],{type:'application/json'}));a.download='pocketpals-backup-'+ymd()+'.json';a.click();toast('Backup downloaded 💾')};
+$('rst').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||!Array.isArray(d.tx)||!Array.isArray(d.archive))throw 0;begin(d,$('uname').textContent);save();toast('Backup restored ✅')}catch(x){toast('That file isn’t a valid backup',1)}};r.readAsText(f);e.target.value=''};
+addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+$('reset').onclick=()=>{if(confirm('Erase all your PocketPals data on this device? This cannot be undone.')){D=fresh();begin(D,$('uname').textContent);save();toast('Data cleared')}};
+
+/* HELPERS */
+const spentOf=()=>D.tx.reduce((s,x)=>s+x.amt,0);
+const allTx=()=>[...D.archive.flatMap(a=>a.items||[]),...D.tx];
+function status(p,has){if(!has)return{k:'Set budget',s:'n',g:'var(--soft)'};
+ if(p<15)return{k:'Critical Depletion',s:'bad',g:'linear-gradient(90deg,#f43f5e,#fb7185)'};
+ if(p<50)return{k:'Moderate',s:'warn',g:'linear-gradient(90deg,#fb923c,#fcd34d)'};
+ return{k:'Healthy',s:'good',g:'linear-gradient(90deg,#34d399,#2ec4b6)'}}
+const mutc=()=>getComputedStyle(document.documentElement).getPropertyValue('--mut').trim()||'#7b6b92';
+function mk(id,seg,tip){return new Chart($(id).getContext('2d'),{type:'line',data:{labels:[],datasets:[{data:[],tension:.35,borderWidth:3.5,pointRadius:5,pointHoverRadius:8,fill:true,borderColor:'#10b981',pointBackgroundColor:'#fff',pointBorderWidth:3,segment:{borderColor:seg}}]},
+ options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{padding:12,displayColors:false,callbacks:{label:c=>tip+peso(c.parsed.y)}}},
+ scales:{x:{grid:{display:false},ticks:{color:mutc(),maxRotation:0,autoSkipPadding:12}},y:{grid:{color:'rgba(167,139,250,.18)'},ticks:{color:mutc(),callback:v=>'₱'+v}}}}})}
+const segBal=c=>D.allowance>0&&c.p1.parsed.y/D.allowance*100<15?'#f43f5e':'#10b981';
+function initCharts(){if(typeof Chart==='undefined')return;if(!chart)chart=mk('chart',segBal,'Balance: ');if(!sChart)sChart=mk('sChart',c=>c.p1.parsed.y<c.p0.parsed.y?'#f43f5e':'#10b981','Total saved: ')}
+function paint(ch,pts,lab,bad,ptc){const d=ch.data.datasets[0];ch.data.labels=lab;d.data=pts;d.borderColor=bad?'#f43f5e':'#10b981';d.pointBorderColor=ptc;
+ const g=ch.ctx.createLinearGradient(0,0,0,240);g.addColorStop(0,bad?'rgba(244,63,94,.35)':'rgba(16,185,129,.35)');g.addColorStop(1,'rgba(255,255,255,0)');d.backgroundColor=g;ch.update()}
+
+/* RENDER */
+function render(){const spent=spentOf(),rem=D.allowance-spent,has=D.allowance>0,pct=has?Math.max(0,Math.min(100,rem/D.allowance*100)):0,st=status(has?rem/D.allowance*100:100,has);
+ $('spent').textContent=peso(spent);$('count').textContent=D.tx.length;$('remain').textContent=peso(rem);$('remain').className='mt-4 text-4xl font-extrabold tracking-tight '+(rem<0?'bad':st.s==='n'?'':st.s);
+ $('bar').style.width=pct+'%';$('bar').style.background=st.g;$('badge').textContent=st.k;$('badge').className='rounded-lg px-2 py-1 text-xs font-extrabold b-'+st.s;
+ $('pct').textContent=Math.round(pct)+'% left';$('msg').textContent=!has?'Set your allowance to begin':rem<0?'Over by '+peso(-rem):'';
+ $('trend').textContent=has?(st.s==='bad'?'📉 Critical':'📈 On track'):'—';$('trend').className='rounded-lg px-2.5 py-1 text-xs font-extrabold b-'+st.s;
+ renderSavings(rem,has);renderGoals();renderStats();renderCats();renderHist();
+ if(chart){const pts=[D.allowance],lab=['Start'];let b=D.allowance;D.tx.forEach(x=>{b-=x.amt;pts.push(+b.toFixed(2));lab.push(tm(x.t))});paint(chart,pts,lab,has&&rem/D.allowance*100<15,pts.map(y=>D.allowance>0&&y/D.allowance*100<15?'#f43f5e':'#10b981'))}}
+
+function renderSavings(rem,has){const A=D.archive,locked=A.reduce((s,x)=>s+x.net,0),ex=D.extra.reduce((s,x)=>s+x.amt,0),tot=locked+ex,live=has||D.tx.length;
+ $('saved').textContent=peso(tot);$('saved').className=(tot<0?'bad':'good')+' text-3xl font-extrabold';
+ $('savedS').textContent='Unspent allowance '+peso(locked)+' · Extra money in/out '+peso(ex);$('savedP').textContent=live?'+ '+peso(rem)+' projected today':'';
+ const v=$('verdict');
+ if(!A.length&&!D.extra.length){v.textContent='Wrap up a day or add extra money to start your savings trend 🌱';v.className='b-n mt-3 rounded-2xl px-4 py-2.5 text-sm font-bold'}
+ else if(tot>0){const last=A.length&&A[A.length-1].net<0;v.textContent='✅ You’re saving! '+peso(tot)+' stashed so far.'+(last?' Your last day went over budget, so bounce back tomorrow!':' Keep it up! 🎉');v.className='b-good mt-3 rounded-2xl px-4 py-2.5 text-sm font-bold'}
+ else{v.textContent='⚠️ You’re spending more than your allowance. Try trimming wants tomorrow.';v.className='b-bad mt-3 rounded-2xl px-4 py-2.5 text-sm font-bold'}
+ if(sChart){const ev=[...A.map(a=>({t:a.ts||new Date(a.date+'T12:00').getTime(),v:a.net})),...D.extra.map(x=>({t:x.t,v:x.amt}))].sort((a,b)=>a.t-b.t);let c=0;const pts=[0],lab=['Start'];
+  ev.forEach(x=>{c+=x.v;pts.push(+c.toFixed(2));lab.push(new Date(x.t).toLocaleDateString('en-PH',{month:'short',day:'numeric'}))});
+  if(live){pts.push(+(c+rem).toFixed(2));lab.push('Today')}
+  paint(sChart,pts,lab,pts[pts.length-1]<0,pts.map((y,i)=>i&&y<pts[i-1]?'#f43f5e':'#10b981'))}}
+
+function renderStats(){const A=D.archive,T=allTx(),days=new Set(T.map(x=>ymd(new Date(x.t)))).size,tot=T.reduce((s,x)=>s+x.amt,0),inc=A.reduce((s,x)=>s+x.allowance,0),net=A.reduce((s,x)=>s+x.net,0);
+ let st=0;for(let i=A.length-1;i>=0&&A[i].net>=0;i--)st++;
+ const by={};T.forEach(x=>by[x.cat]=(by[x.cat]||0)+x.amt);const top=Object.entries(by).sort((a,b)=>b[1]-a[1])[0],tc=top&&CATS[top[0]];
+ const S=[['📊','Savings rate',inc?Math.round(net/inc*100)+'%':'—','of allowance kept','#34d399'],['📅','Avg daily spend',days?peso(tot/days):'—',days+' active day'+(days===1?'':'s'),'#ff9f43'],['🔥','Saving streak',st+' day'+(st===1?'':'s'),'days under budget','#ff6fa5'],[tc?tc.e:'🏷️','Top category',tc?tc.n:'—',tc?peso(top[1])+' total':'no data yet','#4da3ff']];
+ $('stats').innerHTML=S.map(s=>`<div class="card fade p-4" style="background:linear-gradient(160deg,${s[4]}2e,var(--card) 70%)"><div class="text-xl">${s[0]}</div><div class="mut mt-1 text-[11px] font-extrabold uppercase tracking-wider">${s[1]}</div><div class="truncate text-xl font-extrabold">${s[2]}</div><div class="mut text-[11px] font-semibold">${s[3]}</div></div>`).join('')}
+
+function renderCats(){const T=allTx(),tot=T.reduce((s,x)=>s+x.amt,0);
+ $('catBars').innerHTML=Object.entries(CATS).map(([k,c])=>{const v=T.filter(x=>x.cat===k).reduce((s,x)=>s+x.amt,0),p=tot?v/tot*100:0;
+  return `<div><div class="mb-1 flex justify-between text-sm"><span class="font-bold">${c.e} ${c.n}</span><span class="ct font-extrabold" style="--lt:${c.lt};--dk:${c.dk}">${peso(v)} <span class="mut text-xs font-semibold">${Math.round(p)}%</span></span></div><div class="soft h-2.5 overflow-hidden rounded-full"><div class="bar h-full rounded-full" style="width:${p}%;background:${c.c}"></div></div></div>`}).join('')}
+
+function renderHist(){
+ $('hf').innerHTML=[['all','All'],['in','🪙 Savings in/out'],...Object.entries(CATS).map(([k,c])=>[k,c.e+' '+c.n])].map(([k,l])=>`<button data-f="${k}" class="chip ${filt===k?'on':''}">${l}</button>`).join('');
+ const L=[...allTx().map(x=>({...x,kind:'tx'})),...D.extra.map(x=>({...x,kind:'in'}))].filter(x=>filt==='all'||(filt==='in'?x.kind==='in':x.kind==='tx'&&x.cat===filt))
+  .filter(x=>!q||((x.note||'')+' '+(x.kind==='in'?'savings':info(x).n)).toLowerCase().includes(q)).sort((a,b)=>b.t-a.t);
+ const out=L.filter(x=>x.kind==='tx').reduce((s,x)=>s+x.amt,0),inn=L.filter(x=>x.kind==='in').reduce((s,x)=>s+x.amt,0);
+ $('hSum').textContent=L.length+' entr'+(L.length===1?'y':'ies')+' · spent '+peso(out)+(inn?' · savings '+(inn>0?'+':'')+peso(inn):'');
+ if(!L.length){$('hist').innerHTML='<div class="mut flex min-h-[8rem] flex-col items-center justify-center text-center"><div class="mb-2 text-4xl">🧾</div><div class="text-sm font-bold">Nothing here yet</div><div class="text-xs">Every entry shows up with its date and time.</div></div>';return}
+ const nets={};D.archive.forEach(a=>nets[a.date]=(nets[a.date]||0)+a.net);const G={};L.forEach(x=>{const k=ymd(new Date(x.t));(G[k]=G[k]||[]).push(x)});
+ $('hist').innerHTML=Object.entries(G).map(([d,it])=>{const sum=it.filter(x=>x.kind==='tx').reduce((s,x)=>s+x.amt,0),n=nets[d];
+  return `<div class="mut sticky top-0 z-10 flex items-center justify-between rounded-xl px-3 py-2" style="background:var(--fld)"><span class="text-xs font-extrabold uppercase tracking-wider">${d===ymd()?'Today · ':''}${dLong(d)}</span><span class="text-[11px] font-bold">Spent ${peso(sum)}${n!==undefined?` · <span class="${n>=0?'good':'bad'}">Saved ${peso(n)}</span>`:''}</span></div>`+
+  it.map(x=>{const inc=x.kind==='in',neg=inc&&x.amt<0,c=inc?(neg?{e:'💸',n:'Taken from savings',c:'#ff9f43'}:{e:'🪙',n:'Extra savings',c:'#34d399'}):info(x);
+   return `<div class="flex items-center gap-3 rounded-2xl p-3" style="background:var(--soft)"><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style="background:${c.c}33">${c.e}</div>
+   <div class="min-w-0 flex-1"><div class="truncate text-sm font-bold">${x.note?esc(x.note):c.n}</div><div class="mut text-xs font-semibold">${c.n} · ${dShort(x.t)} · ${tm(x.t)}</div></div>
+   <div class="text-sm font-extrabold ${inc&&!neg?'good':'bad'}">${inc&&!neg?'+':'−'}${peso(x.amt).replace('−','')}</div>
+   <button data-del="${x.id}" data-k="${x.kind}" class="soft h-9 w-9 rounded-xl text-sm" aria-label="Remove this entry" title="Remove (wrong entry?)">🗑</button></div>`}).join('')}).join('')}
+
+/* WRAP UP */
+function breakdown(c){const e=Object.entries(CATS).filter(([k])=>c[k]>0);return e.length?e.map(([k,m])=>`<div class="flex items-center justify-between"><span>${m.e} ${m.n}</span><b>${peso(c[k])}</b></div>`).join(''):'<div class="mut">No expenses recorded.</div>'}
+function summary(){const cats={};D.tx.forEach(x=>cats[x.cat]=(cats[x.cat]||0)+x.amt);const spent=spentOf();return{date:ymd(),allowance:D.allowance,spent,net:D.allowance-spent,cats,count:D.tx.length,items:[...D.tx]}}
+$('wrapBtn').onclick=()=>{if(!D.allowance&&!D.tx.length)return toast('Set an allowance or log an expense first',1);
+ const s=summary(),pos=s.net>=0;$('wDate').textContent=new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'});
+ $('wBody').innerHTML=`<div class="space-y-2"><div class="flex justify-between rounded-2xl p-3" style="background:rgba(77,163,255,.2)"><span class="text-sm">Total allowance received</span><b>${peso(s.allowance)}</b></div>
+ <div class="flex justify-between rounded-2xl p-3" style="background:rgba(255,111,165,.2)"><span class="text-sm">Total daily expenses</span><b class="bad">${peso(s.spent)}</b></div>
+ <div class="flex justify-between rounded-2xl p-3" style="background:${pos?'rgba(52,211,153,.25)':'rgba(244,63,94,.18)'}"><span class="text-sm font-bold">Final net savings kept</span><b class="${pos?'good':'bad'} text-lg">${peso(s.net)}</b></div></div>
+ <div class="mut mb-1.5 mt-4 text-xs font-extrabold uppercase tracking-wider">Category breakdown</div><div class="space-y-1.5 text-sm">${breakdown(s.cats)}</div>
+ <p class="mut mt-4 text-xs font-semibold">Confirming adds this day to your savings, keeps its transactions in History and resets your allowance.</p>`;open_('wrap')};
+$('wOk').onclick=()=>{const s=summary();s.ts=Date.now();s.id=s.ts;D.archive.push(s);D.tx=[];D.allowance=0;$('allow').value='';save();close_('wrap');render();
+ toast(s.net>=0?'Day locked! You kept '+peso(s.net)+' 🎉':'Day locked. Fresh start tomorrow 💪')};
+
+/* BOOT */
+if(CLOUD_ON)initCloud();else start();
+</script>
+</body>
+</html>
